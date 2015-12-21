@@ -47,14 +47,8 @@ public class AttackRSA {
 	 */
 	private static BigInteger recoverMessage(BigInteger[] N, BigInteger[] e,
 			BigInteger[] c) {
-		
-		/*
-		 * the current setup finds a number x such that:
-		 *	x = 2 mod 5, x = 3 mod 7, x = 4 mod 9, and x = 5 mod 11
-		 * note that the values in mods must be mutually prime
-		 */	    
 	    
-	    //M is the product of the mods
+	    //M is the product of the N
 	    BigInteger M = BigInteger.ONE;
 	    for(int i = 0; i < N.length; i++)
 	      M = M.multiply(N[i]);
@@ -62,39 +56,26 @@ public class AttackRSA {
 	    BigInteger[] multInv = new BigInteger[c.length];
 	    
 	    /*
-	     * this loop applies the Euclidean algorithm to each pair of M/mods[i] and mods[i]
-	     * since it is assumed that the various mods[i] are pairwise coprime,
+	     * this loop applies the Euclidean algorithm to each pair of M/N[i] and N[i]
+	     * since it is assumed that the various N[i] are pairwise coprime,
 	     * the end result of applying the Euclidean algorithm will be
-	     * gcd(M/mods[i], mods[i]) = 1 = a(M/mods[i]) + b(mods[i]), or that a(M/mods[i]) is
-	     * equivalent to 1 mod (mods[i]). This a is then the multiplicative
-	     * inverse of (M/mods[i]) mod mods[i], which is what we are looking to multiply
-	     * by our constraint constraints[i] as per the Chinese Remainder Theorem
-	     * euclidean(M/mods[i], mods[i])[0] returns the coefficient a
-	     * in the equation a(M/mods[i]) + b(mods[i]) = 1
+	     * gcd(M/N[i], N[i]) = 1 = a(M/N[i]) + b(N[i]), or that a(M/N[i]) is
+	     * equivalent to 1 mod (N[i]). This a is then the multiplicative
+	     * inverse of (M/N[i]) mod N[i], which is what we are looking to multiply
+	     * by our constraint c[i] as per the Chinese Remainder Theorem
+	     * euclidean(M/N[i], N[i])[0] returns the coefficient a
+	     * in the equation a(M/N[i]) + b(N[i]) = 1
 	     */
 	    for(int i = 0; i < multInv.length; i++)
 	      multInv[i] = euclidean(M.divide(N[i]), N[i])[0];
 	    
 	    BigInteger x = BigInteger.ZERO;
 	    
-	    //x = the sum over all given i of (M/mods[i])(constraints[i])(multInv[i])
+	    //x = the sum over all given i of (M/N[i])(c[i])(multInv[i])
 	    for(int i = 0; i < N.length; i++)
 	      x = x.add((M.divide(N[i])).multiply(c[i].multiply(multInv[i])));
 	    
-	    x = leastPosEquiv(x, M);
-	    
-	    //System.out.println("x is equivalent to " + x + " mod " + M);
-		
-		/*BigInteger C = new BigInteger("993754199");
-		
-		System.out.println("Debut");
-		System.out.println(C.toString());
-		
-		while(c[1] != (C.mod(N[1])) || c[2] != (C.mod(N[2])) || c[3] != (C.mod(N[3]))
-			      ){
-			C = C.add(new BigInteger("1"));
-			System.out.println(C.toString());
-		}*/
+	    x = leastPosEquiv(x, M); 
 		
 		return CubeRoot.cbrt(x);
 		
@@ -138,7 +119,7 @@ public class AttackRSA {
 	  //finds the least positive integer equivalent to a mod m
 	  public static BigInteger leastPosEquiv(BigInteger a, BigInteger m)
 	  {
-	    //a eqivalent to b mod -m <==> a equivalent to b mod m
+	    //a equivalent to b mod -m <==> a equivalent to b mod m
 	    if(m.compareTo(BigInteger.ZERO) < 0)
 	      return leastPosEquiv(a, new BigInteger("-1").multiply(m));
 	    //if 0 <= a < m, then a is the least positive integer equivalent to a mod m
